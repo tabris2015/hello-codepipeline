@@ -9,7 +9,7 @@ app = FastAPI(
     title=f"Awesome API [{stage}]", root_path=None if stage == "local" else f"/{stage}"
 )
 
-app.include_router(user_router, prefix="users")
+app.include_router(user_router, prefix="/users")
 
 
 @app.get("/")

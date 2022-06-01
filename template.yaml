@@ -77,15 +77,6 @@ Outputs:
   # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
   # Find out more about other implicit resources you can reference within SAM
   # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
-  FastAPIDynamoApi:
+  WebServiceApi:
     Description: "API Gateway endpoint URL for FastAPI application"
     Value: !Sub "https://${ApiGatewayApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}/"
-  FastAPIDynamoFunction:
-    Description: "FastAPI app Lambda Function ARN"
-    Value: !GetAtt FastAPIDynamoFunction.Arn
-  FastAPIDynamoFunctionIamRole:
-    Description: "Implicit IAM Role created for FastAPI app function"
-    Value: !GetAtt FastAPIDynamoFunctionRole.Arn
-  DynamoDBTable:
-    Description: "DynamoDB table name ARN"
-    Value: !GetAtt DynamoDBTable.Arn

@@ -12,6 +12,10 @@ table_name = (
 print(f"Table Name: {table_name}")
 
 dynamodb = boto3.resource(
-    "dynamodb", endpoint_url="http://localhost:8000" if stage == "local" else None
+    "dynamodb", endpoint_url="http://localhost:9000" if stage == "local" else None
 )
 table = dynamodb.Table(table_name)
+
+
+def get_table():
+    yield table

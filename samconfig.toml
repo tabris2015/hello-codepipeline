@@ -1,0 +1,33 @@
+version = 0.1
+[dev]
+[dev.deploy]
+[dev.deploy.parameters]
+stack_name = "hello-codepipeline-dev"
+s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-1grgpdxgovdy"
+s3_prefix = "hello-codepipeline-dev"
+region = "us-east-1"
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = "Stage=\"dev\" TableNamePrefix=\"hello-users\""
+image_repositories = []
+
+[staging]
+[staging.deploy]
+[staging.deploy.parameters]
+stack_name = "hello-codepipeline-staging"
+s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-1grgpdxgovdy"
+s3_prefix = "hello-codepipeline-staging"
+region = "us-east-1"
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = "Stage=\"staging\" TableNamePrefix=\"hello-users\""
+image_repositories = []
+
+[prod]
+[prod.deploy]
+[prod.deploy.parameters]
+stack_name = "hello-codepipeline-prod"
+s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-1grgpdxgovdy"
+s3_prefix = "hello-codepipeline-prod"
+region = "us-east-1"
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = "Stage=\"prod\" TableNamePrefix=\"hello-users\""
+image_repositories = []

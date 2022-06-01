@@ -1,7 +1,7 @@
 import os
 from fastapi import FastAPI
 from mangum import Mangum
-from app.router import user_router
+from router import user_router
 
 stage = os.environ.get("STAGE", "local")
 

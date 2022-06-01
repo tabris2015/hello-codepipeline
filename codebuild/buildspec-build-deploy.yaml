@@ -1,0 +1,9 @@
+version: 0.2
+
+phases:
+  build:
+    commands:
+      - sam build
+  post_build:
+    commands:
+      - sam deploy --config-env ${STAGE} --no-confirm-changeset --no-fail-on-empty-changeset

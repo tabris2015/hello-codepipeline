@@ -1,0 +1,244 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: codepipeline-template
+
+Parameters:
+  GitHubUrl:
+    Type: String
+    Description: URL for GitHub repo i.e. https://github.com/username/repository
+    Default: https://github.com/tabris2015/hello-codepipeline
+
+  GitHubOAuthToken:
+    Type: String
+    NoEcho: true
+    MinLength: 40
+    MaxLength: 40
+
+  GitHubOwner:
+    Type: String
+    Default: tabris2015
+    AllowedPattern: "[A-Za-z0-9-]+"
+
+  GitHubRepo:
+    Type: String
+    Default: hello-codepipeline
+    AllowedPattern: "[A-Za-z0-9-]+"
+
+  GitHubBranch:
+    Type: String
+    Default: master
+    AllowedPattern: "[A-Za-z0-9-]+"
+
+    # *** The stack name for the actual application we're deploying
+  ApplicationStackName:
+    Type: String
+    Default: hello-codepipeline-app
+    AllowedPattern: "[A-Za-z0-9-]+"
+
+Resources:
+  PipelineArtifactsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      VersioningConfiguration:
+        Status: Enabled
+
+  CodePipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      ArtifactStore:
+        Type: S3
+        Location: !Ref PipelineArtifactsBucket
+      RestartExecutionOnUpdate: true
+      RoleArn: !GetAtt CodePipelineRole.Arn
+      Stages:
+        - Name: Source
+          Actions:
+            - Name: Source
+              InputArtifacts: [ ]
+              ActionTypeId:
+                Category: Source
+                Owner: ThirdParty
+                Version: 1
+                Provider: GitHub
+              OutputArtifacts:
+                - Name: SourceCode
+              Configuration:
+                Owner: !Ref GitHubOwner
+                Repo: !Ref GitHubRepo
+                Branch: !Ref GitHubBranch
+                PollForSourceChanges: false
+                OAuthToken: !Ref GitHubOAuthToken
+        # Test, build and deploy actions
+        - Name: Test
+          Actions:
+            - Name: test_application
+              ActionTypeId:
+                Category: Test
+                Owner: AWS
+                Provider: CodeBuild
+                Version: '1'
+              InputArtifacts:
+                - Name: SourceCode
+              Configuration:
+                ProjectName: !Ref CodeBuildTest
+        - Name: DeployDev
+          Actions:
+            - Name: deploy_to_dev
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: '1'
+              InputArtifacts:
+                - Name: SourceCode
+              Configuration:
+                ProjectName: !Ref CodeBuildBuildDeploy
+                EnvironmentVariables: '[{"name":"STAGE","value":"dev","type":"PLAINTEXT"}]'
+        - Name: DeployStaging
+          Actions:
+            - Name: deploy_to_staging
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: '1'
+              InputArtifacts:
+                - Name: SourceCode
+              Configuration:
+                ProjectName: !Ref CodeBuildBuildDeploy
+                EnvironmentVariables: '[{"name":"STAGE","value":"staging","type":"PLAINTEXT"}]'
+        - Name: ProdApproval
+          Actions:
+            - Name: approve_deploy_to_production
+              ActionTypeId:
+                Category: Approval
+                Owner: AWS
+                Provider: Manual
+                Version: '1'
+        - Name: DeployProd
+          Actions:
+            - Name: deploy_to_prod
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: '1'
+              InputArtifacts:
+                - Name: SourceCode
+              Configuration:
+                ProjectName: !Ref CodeBuildBuildDeploy
+                EnvironmentVariables: '[{"name":"STAGE","value":"prod","type":"PLAINTEXT"}]'
+
+  GithubWebhook:
+    Type: 'AWS::CodePipeline::Webhook'
+    Properties:
+      Authentication: GITHUB_HMAC
+      AuthenticationConfiguration:
+        SecretToken: !Ref GitHubOAuthToken
+      RegisterWithThirdParty: 'true'
+      Filters:
+        - JsonPath: "$.ref"
+          MatchEquals: refs/heads/{Branch}
+      TargetPipeline: !Ref CodePipeline
+      TargetAction: Source
+      TargetPipelineVersion: !GetAtt CodePipeline.Version
+  CodePipelineRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          Effect: Allow
+          Principal:
+            Service: codepipeline.amazonaws.com
+          Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AdministratorAccess #TODO: Reduce permissions
+  CloudformationRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          Effect: Allow
+          Principal:
+            Service: cloudformation.amazonaws.com
+          Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AdministratorAccess #TODO: Reduce permissions
+
+  CodeBuildRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+            - Effect: Allow
+              Principal:
+                  Service:
+                    - codebuild.amazonaws.com
+              Action:
+                - sts:AssumeRole
+      Description: !Sub "IAM Role for ${AWS::StackName}"
+      Path: '/'
+      Policies:
+        - PolicyName: root
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow     # Mala practica, CAMBIAR
+                Action:
+                  - cloudformation:*
+                  - codebuild:*
+                  - logs:*
+                  - dynamodb:*
+                  - lambda:*
+                  - s3:*
+                  - cloudwatch:*
+                  - ssm:*
+                  - iam:*
+                  - apigateway:*
+                Resource: '*'
+  CodeBuildBuildDeploy:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: !Sub "${ApplicationStackName}-build-deploy-project"
+      Description: CodeBuild with GitHub webhook for build and deploy of fastapi web service
+      ServiceRole: !GetAtt CodeBuildRole.Arn
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        Type: LINUX_CONTAINER
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: public.ecr.aws/sam/build-python3.8
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: codebuild/buildspec-build-deploy.yaml
+      TimeoutInMinutes: 10
+
+  CodeBuildTest:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: !Sub "${ApplicationStackName}-test-project"
+      Description: CodeBuild with GitHub webhook for testing fastapi web service
+      ServiceRole: !GetAtt CodeBuildRole.Arn
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        Type: LINUX_CONTAINER
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: public.ecr.aws/sam/build-python3.8
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: codebuild/buildspec-test.yaml
+      TimeoutInMinutes: 10
+
+  CodeBuildDeployLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/codebuild/${CodeBuildBuildDeploy}"
+      RetentionInDays: 7
+  CodeBuildTestLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/codebuild/${CodeBuildTest}"
+      RetentionInDays: 7

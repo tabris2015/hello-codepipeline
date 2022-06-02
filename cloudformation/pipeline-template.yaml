@@ -2,11 +2,6 @@ AWSTemplateFormatVersion: '2010-09-09'
 Description: codepipeline-template
 
 Parameters:
-  GitHubUrl:
-    Type: String
-    Description: URL for GitHub repo i.e. https://github.com/username/repository
-    Default: https://github.com/tabris2015/hello-codepipeline
-
   GitHubOAuthToken:
     Type: String
     NoEcho: true
@@ -15,6 +10,7 @@ Parameters:
 
   GitHubOwner:
     Type: String
+    Description: github username
     Default: tabris2015
     AllowedPattern: "[A-Za-z0-9-]+"
 
@@ -29,7 +25,7 @@ Parameters:
     AllowedPattern: "[A-Za-z0-9-]+"
 
     # *** The stack name for the actual application we're deploying
-  ApplicationStackName:
+  ApplicationName:
     Type: String
     Default: hello-codepipeline-app
     AllowedPattern: "[A-Za-z0-9-]+"
@@ -201,7 +197,7 @@ Resources:
   CodeBuildBuildDeploy:
     Type: AWS::CodeBuild::Project
     Properties:
-      Name: !Sub "${ApplicationStackName}-build-deploy-project"
+      Name: !Sub "${ApplicationName}-build-deploy-project"
       Description: CodeBuild with GitHub webhook for build and deploy of fastapi web service
       ServiceRole: !GetAtt CodeBuildRole.Arn
       Artifacts:
@@ -218,7 +214,7 @@ Resources:
   CodeBuildTest:
     Type: AWS::CodeBuild::Project
     Properties:
-      Name: !Sub "${ApplicationStackName}-test-project"
+      Name: !Sub "${ApplicationName}-test-project"
       Description: CodeBuild with GitHub webhook for testing fastapi web service
       ServiceRole: !GetAtt CodeBuildRole.Arn
       Artifacts:

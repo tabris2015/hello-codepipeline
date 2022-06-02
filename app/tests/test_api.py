@@ -53,5 +53,32 @@ def test_create_user():
         "alias": "chupacabras",
     }
     response = client.post("/users/", json=user)
-    assert response.status_code == 200
+    assert response.status_code == 201
+    assert response.json() == user
+
+
+@mock_dynamodb
+def test_fail_create_invalid_user():
+    user = {
+        "username": "test_user",
+        "last_name": "user",
+        "age": 90,
+        "alias": "chupacabras",
+    }
+    response = client.post("/users/", json=user)
+    assert response.status_code == 422
+    # assert response.json() == user
+
+
+@mock_dynamodb
+def test_create_user_with_optional_fields():
+    user = {
+        "username": "test_user",
+        "first_name": "test",
+        "last_name": "user",
+        "age": None,
+        "alias": None,
+    }
+    response = client.post("/users/", json=user)
+    assert response.status_code == 201
     assert response.json() == user

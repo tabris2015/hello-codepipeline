@@ -20,9 +20,8 @@ def check_table():
     try:
         print(f"Table: {table_name}: {table.table_status}")
     except boto3.client("dynamodb").exceptions.ResourceNotFoundException:
-        new_table = None
         print("local env, creating table...")
-        new_table = create_users_table(dynamodb, table_name)
+        create_users_table(dynamodb, table_name)
         print("Local table created")
 
 

@@ -39,3 +39,7 @@ $ pytest app
 $ black app
 $ pylint app
 ```
+
+## Deploy Pipeline IaC
+
+Refer to [docs](cloudformation/README.md)

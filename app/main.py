@@ -17,14 +17,13 @@ app.include_router(user_router, prefix="/users")
 
 @app.on_event("startup")
 def check_table():
-    print(hasattr(table, "status"))
-    new_table = None
-    if not hasattr(table, "status"):
+    try:
+        print(f"Table: {table_name}: {table.table_status}")
+    except boto3.client("dynamodb").exceptions.ResourceNotFoundException:
+        new_table = None
         print("local env, creating table...")
-        try:
-            new_table = create_users_table(dynamodb, table_name)
-        except boto3.client("dynamodb").exceptions.ResourceInUseException:
-            print("Local table already exists!")
+        new_table = create_users_table(dynamodb, table_name)
+        print("Local table created")
 
 
 @app.get("/")

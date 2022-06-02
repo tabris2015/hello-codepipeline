@@ -5,10 +5,13 @@ phases:
     runtime-versions:
        python: 3.8
     commands:
+      - pip install -r requirements.txt
       - pip install -r requirements-dev.txt
       - echo ${STAGE}
   build:
     commands:
+      - echo Run Tests...
+      - pytest app
       - echo Check formatting...
       - black app --check
       - echo Check linting...

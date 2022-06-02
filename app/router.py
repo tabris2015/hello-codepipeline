@@ -6,7 +6,7 @@ from app.db import get_table
 user_router = APIRouter()
 
 
-@user_router.post("/", response_model=User)
+@user_router.post("/", response_model=User, status_code=201)
 def create_user(user: User, table=Depends(get_table)):
     table.put_item(Item=user.dict())
     return user

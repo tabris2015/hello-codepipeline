@@ -1,7 +1,7 @@
 from typing import List
 from fastapi import APIRouter, Depends
-from models import User
-from db import get_table
+from app.models import User
+from app.db import get_table
 
 user_router = APIRouter()
 

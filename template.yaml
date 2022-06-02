@@ -29,8 +29,8 @@ Resources:
   WebServiceFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
-      CodeUri: ./app
-      Handler: main.handler
+      CodeUri: .
+      Handler: app.main.handler
       Runtime: python3.8
       PackageType: Zip
       Architectures:

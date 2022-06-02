@@ -1,11 +1,10 @@
 import os
 from fastapi import FastAPI
 from mangum import Mangum
-import botocore
 import boto3
-from router import user_router
-from db import table, table_name, dynamodb
-from create_table import create_users_table
+from app.router import user_router
+from app.db import table, table_name, dynamodb
+from app.create_table import create_users_table
 
 stage = os.environ.get("STAGE", "local")
 
@@ -26,6 +25,7 @@ def check_table():
             new_table = create_users_table(dynamodb, table_name)
         except boto3.client("dynamodb").exceptions.ResourceInUseException:
             print("Local table already exists!")
+
 
 @app.get("/")
 def root():

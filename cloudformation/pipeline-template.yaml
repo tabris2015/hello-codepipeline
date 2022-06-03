@@ -193,6 +193,7 @@ Resources:
                   - ssm:*
                   - iam:*
                   - apigateway:*
+                  - sns:*
                 Resource: '*'
   CodeBuildBuildDeploy:
     Type: AWS::CodeBuild::Project

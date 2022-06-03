@@ -31,3 +31,15 @@ region = "us-east-1"
 capabilities = "CAPABILITY_IAM"
 parameter_overrides = "Stage=\"prod\" TableNamePrefix=\"hello-users\""
 image_repositories = []
+
+[test]
+[test.deploy]
+[test.deploy.parameters]
+stack_name = "sam-app"
+s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-1grgpdxgovdy"
+s3_prefix = "sam-app"
+region = "us-east-1"
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = "Stage=\"test\" TableNamePrefix=\"test-users\""
+image_repositories = []

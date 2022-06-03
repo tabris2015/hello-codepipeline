@@ -40,6 +40,11 @@ Resources:
             ParameterName: !Ref TableNameParameter
         - DynamoDBCrudPolicy:
             TableName: !Ref DynamoDBTable
+        - SNSPublishMessagePolicy:
+            TopicName: !GetAtt NotificationTopic.TopicName
+      Environment:
+        Variables:
+          SNS_TOPIC_ARN: !Ref NotificationTopic
       Events:
         Root:
           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
@@ -53,6 +58,27 @@ Resources:
             Path: /{proxy+}
             Method: ANY
             RestApiId: !Ref ApiGatewayApi
+
+  EmailNotificationFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./email_function
+      Handler: main.handler
+      Runtime: python3.8
+      PackageType: Zip
+      Architectures:
+        - x86_64
+      Policies:
+        - SNSCrudPolicy:
+            TopicName: !GetAtt NotificationTopic.TopicName
+      Events:
+        NotificationEvent:
+          Type: SNS
+          Properties:
+            Topic: !Ref NotificationTopic
+
+  NotificationTopic:
+    Type: AWS::SNS::Topic
 
   DynamoDBTable:
     Type: AWS::DynamoDB::Table

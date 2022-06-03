@@ -6,8 +6,10 @@ from app.db import get_table
 
 
 def override_get_table():
-    dynamodb = boto3.resource('dynamodb')
-    table = dynamodb.create_table(TableName='mock-table', KeySchema=[
+    dynamodb = boto3.resource("dynamodb")
+    table = dynamodb.create_table(
+        TableName="mock-table",
+        KeySchema=[
             {"AttributeName": "username", "KeyType": "HASH"},  # Partition key
         ],
         AttributeDefinitions=[
@@ -21,7 +23,8 @@ def override_get_table():
             # ReadCapacityUnits set to 10 strongly consistent reads per second
             "ReadCapacityUnits": 10,
             "WriteCapacityUnits": 10,  # WriteCapacityUnits set to 10 writes per second
-        },)
+        },
+    )
     return table
 
 

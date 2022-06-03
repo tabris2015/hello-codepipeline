@@ -21,10 +21,14 @@ def list_users(limit: int = 100, table=Depends(get_table)):
 
 
 @user_router.delete("/")
-def delete_user(username: str, table=Depends(get_table), sns_client=Depends(get_sns_client)):
+def delete_user(
+    username: str, table=Depends(get_table), sns_client=Depends(get_sns_client)
+):
     table.delete_item(Key={"username": username})
     sns_client.publish(
         TargetArn=sns_topic_arn,
-        Message=json.dumps({"default": json.dumps({"message": f"user {username} deleted!"})})
+        Message=json.dumps(
+            {"default": json.dumps({"message": f"user {username} deleted!"})}
+        ),
     )
     return {"message": "OK"}
